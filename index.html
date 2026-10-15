@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AAC 영상 시청 후 퀴즈 & 소감 작성</title>
+  <style>
+    :root {
+      --primary-color: #4f46e5;
+      --primary-hover: #4338ca;
+      --bg-color: #f3f4f6;
+      --card-bg: #ffffff;
+      --text-color: #1f2937;
+      --error-color: #dc2626;
+      --success-color: #059669;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 650px;
+      background-color: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .header h1 {
+      font-size: 1.6rem;
+      color: var(--primary-color);
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 0.95rem;
+      color: #6b7280;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background-color: #e5e7eb;
+      border-radius: 4px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background-color: var(--primary-color);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .quiz-question {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .option-btn {
+      padding: 14px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      background-color: #fff;
+      text-align: left;
+      font-size: 0.98rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      line-height: 1.4;
+    }
+
+    .option-btn:hover {
+      border-color: #c7d2fe;
+      background-color: #f5f3ff;
+    }
+
+    .option-btn.selected {
+      border-color: var(--primary-color);
+      background-color: #eef2ff;
+      font-weight: 600;
+    }
+
+    /* 피드백(정답/오답) 스타일 */
+    .feedback {
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.98rem;
+      margin-bottom: 20px;
+      display: none;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .feedback.error {
+      background-color: #fef2f2;
+      color: var(--error-color);
+      border: 2px solid #fca5a5;
+      animation: shake 0.3s ease-in-out;
+    }
+
+    .feedback.success {
+      background-color: #ecfdf5;
+      color: var(--success-color);
+      border: 2px solid #6ee7b7;
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-5px); }
+      80% { transform: translateX(5px); }
+      100% { transform: translateX(0); }
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background-color: var(--primary-color);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .btn:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-next {
+      background-color: var(--success-color);
+    }
+
+    .btn-next:hover {
+      background-color: #047857;
+    }
+
+    .attempt-badge {
+      display: inline-block;
+      font-size: 0.85rem;
+      background-color: #e0e7ff;
+      color: var(--primary-color);
+      padding: 4px 10px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .loading-spinner {
+      text-align: center;
+      padding: 20px;
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>AAC 이해하기 퀴즈 & 소감문</h1>
+    <p>영상을 시청한 뒤 퀴즈를 풀고 느낀점을 작성해주세요.</p>
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- 1. 학생 정보 입력 단계 -->
+  <div class="section active" id="secStudentInfo">
+    <div class="form-group">
+      <label for="studentInfo">학년 / 반 / 번호 (예: 1학년 2반 15번)</label>
+      <input type="text" id="studentInfo" placeholder="예: 2학년 3반 5번">
+    </div>
+    <div class="form-group">
+      <label for="studentName">이름</label>
+      <input type="text" id="studentName" placeholder="이름을 입력하세요">
+    </div>
+    <button class="btn" onclick="startQuiz()">퀴즈 시작하기</button>
+  </div>
+
+  <!-- 2. 퀴즈 진행 단계 -->
+  <div class="section" id="secQuiz">
+    <div class="attempt-badge" id="attemptBadge">문제 1 / 5 (현재 시도 횟수: 1회)</div>
+    <div class="quiz-question" id="quizQuestion">질문이 여기에 표시됩니다.</div>
+    <div class="options" id="quizOptions"></div>
+    
+    <!-- 정답/오답 메세지가 표시되는 영역 -->
+    <div class="feedback" id="quizFeedback"></div>
+    
+    <button class="btn" id="btnCheck" onclick="checkAnswer()">정답 확인</button>
+    <button class="btn btn-next" id="btnNext" onclick="nextQuestion()" style="display:none;">다음 문제로 이동 ▶</button>
+  </div>
+
+  <!-- 3. 느낀점 작성 단계 -->
+  <div class="section" id="secReflection">
+    <h2 style="font-size: 1.2rem; margin-bottom: 16px; color: var(--primary-color);">영상 시청 소감 작성</h2>
+    <div class="form-group">
+      <label for="learned">1. 이번 영상을 통해 새롭게 알게 된 점은 무엇인가요?</label>
+      <textarea id="learned" placeholder="자유롭게 작성해주세요..."></textarea>
+    </div>
+    <div class="form-group">
+      <label for="thoughts">2. 영상을 보고 난 뒤 느낀점이나 생각을 적어주세요.</label>
+      <textarea id="thoughts" placeholder="자유롭게 작성해주세요..."></textarea>
+    </div>
+    <button class="btn" onclick="submitData()">최종 제출하기</button>
+  </div>
+
+  <!-- 4. 제출 완료 단계 -->
+  <div class="section" id="secComplete">
+    <div id="loadingView" class="loading-spinner">
+      제출 중입니다... 잠시만 기다려주세요.
+    </div>
+    <div id="successView" style="display:none; text-align: center;">
+      <h2 style="color: var(--success-color); margin-bottom: 12px; font-size: 1.5rem;">🎉 제출 완료!</h2>
+      <p style="color: #4b5563; line-height: 1.6;">
+        퀴즈 풀이와 소감 작성이 정상적으로 제출되었습니다.<br>수고하셨습니다!
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 구글 앱스 스크립트 웹앱 URL 설정 완료
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbz1ubUrHRV1zgzJ5rLLlg7tZYzLETUK0NGq8eEeU_Q_OxCWR6hu-Jr1kHZ8Qoay8hKawQ/exec";
+
+  // 퀴즈 데이터 설정
+  const questions = [
+    {
+      id: 1,
+      question: "질문 1. 보완대체의사소통(AAC)에 대한 설명 중 가장 올바른 것은 무엇일까요?",
+      options: [
+        { label: "A", text: "말이나 글로 소통하기 힘든 사람을 돕는 도구이다." },
+        { label: "B", text: "글자를 자동으로 교정해 주는 문서 작성 프로그램이다." },
+        { label: "C", text: "음악을 자동으로 합성하여 연주해 주는 장치이다." },
+        { label: "D", text: "외국어를 빠르게 배우기 위해 사용하는 프로그램이다." }
+      ],
+      answer: "A"
+    },
+    {
+      id: 2,
+      question: "질문 2. AAC의 '보완'과 '대체'의 의미를 가장 잘 설명한 것은 무엇일까요?",
+      options: [
+        { label: "A", text: "글씨를 쓸 때는 대체하고, 말을 할 때는 보완한다." },
+        { label: "B", text: "장애인만 사용할 때는 대체하고, 비장애인은 보완한다." },
+        { label: "C", text: "말을 전혀 못 할 때는 대체하고, 일부 부족할 때는 보완한다." },
+        { label: "D", text: "외국어를 번역할 때는 대체하고, 한국어는 보완한다." }
+      ],
+      answer: "C"
+    },
+    {
+      id: 3,
+      question: "질문 3. 개편된 '나의AAC' 앱에 새롭게 도입된 AI 음성 기술의 특징으로 옳은 것은 무엇일까요?",
+      options: [
+        { label: "A", text: "영어나 외국어로만 음성을 변환하여 출력해 준다." },
+        { label: "B", text: "상대방의 목소리를 자동으로 녹음하여 저장해 준다." },
+        { label: "C", text: "사용자의 성별, 연령 및 감정을 반영한 자연스러운 목소리를 제공한다." },
+        { label: "D", text: "한 가지 단일 톤의 기계 음성만 일정하게 재생한다." }
+      ],
+      answer: "C"
+    },
+    {
+      id: 4,
+      question: "질문 4. '나의AAC' 앱에서 활용할 수 있는 상징과 상황판 기능에 대한 설명 중 잘못된 것은 무엇일까요?",
+      options: [
+        { label: "A", text: "1만 여 개 이상의 다양한 기본 상징들이 탑재되어 있다." },
+        { label: "B", text: "한 번 등록된 상징과 상황판은 절대로 수정하거나 새로 추가할 수 없다." },
+        { label: "C", text: "만든 상황판을 공유하여 다른 계정에서도 그대로 사용할 수 있다." },
+        { label: "D", text: "직접 찍은 사진이나 구글 이미지 검색을 통해 상징을 만들 수 있다." }
+      ],
+      answer: "B"
+    },
+    {
+      id: 5,
+      question: "질문 5. '나의AAC' 앱에 적용된 '유니버설디자인 서체'의 가장 큰 특징은 무엇일까요?",
+      options: [
+        { label: "A", text: "시력 약자나 노안이 있는 사람을 포함해 누구나 읽기 편하게 디자인되었다." },
+        { label: "B", text: "글자 크기를 매우 작게 줄여 한 화면에 많은 글을 담도록 해 준다." },
+        { label: "C", text: "특수 보조기기가 있는 사람만 볼 수 있는 비밀 서체이다." },
+        { label: "D", text: "화려한 장식 글꼴을 사용하여 앱의 디자인을 화려하게 만든다." }
+      ],
+      answer: "A"
+    }
+  ];
+
+  let currentQuestionIndex = 0;
+  let selectedOption = null;
+  let attempts = [0, 0, 0, 0, 0];
+  let studentInfoData = { info: "", name: "" };
+
+  function setProgress(percent) {
+    document.getElementById('progressFill').style.width = percent + '%';
+  }
+
+  function startQuiz() {
+    const info = document.getElementById('studentInfo').value.trim();
+    const name = document.getElementById('studentName').value.trim();
+
+    if (!info || !name) {
+      alert("학년/반/번호와 이름을 모두 입력해주세요!");
+      return;
+    }
+
+    studentInfoData.info = info;
+    studentInfoData.name = name;
+
+    document.getElementById('secStudentInfo').classList.remove('active');
+    document.getElementById('secQuiz').classList.add('active');
+    
+    loadQuestion();
+  }
+
+  function loadQuestion() {
+    const q = questions[currentQuestionIndex];
+    selectedOption = null;
+    
+    if (attempts[currentQuestionIndex] === 0) {
+      attempts[currentQuestionIndex] = 1;
+    }
+
+    document.getElementById('attemptBadge').innerText = `문제 ${currentQuestionIndex + 1} / ${questions.length} (현재 시도 횟수: ${attempts[currentQuestionIndex]}회)`;
+    document.getElementById('quizQuestion').innerText = q.question;
+    
+    const optionsContainer = document.getElementById('quizOptions');
+    optionsContainer.innerHTML = '';
+
+    q.options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.innerHTML = `<strong>${opt.label}.</strong> ${opt.text}`;
+      btn.onclick = () => selectOption(btn, opt.label);
+      optionsContainer.appendChild(btn);
+    });
+
+    const feedbackEl = document.getElementById('quizFeedback');
+    feedbackEl.innerText = '';
+    feedbackEl.className = 'feedback';
+    feedbackEl.style.display = 'none';
+
+    document.getElementById('btnCheck').style.display = 'block';
+    document.getElementById('btnNext').style.display = 'none';
+
+    setProgress(((currentQuestionIndex) / (questions.length + 1)) * 100);
+  }
+
+  function selectOption(button, label) {
+    const allBtns = document.querySelectorAll('.option-btn');
+    allBtns.forEach(b => b.classList.remove('selected'));
+    button.classList.add('selected');
+    selectedOption = label;
+  }
+
+  function checkAnswer() {
+    if (!selectedOption) {
+      alert("보기를 먼저 선택해 주세요!");
+      return;
+    }
+
+    const q = questions[currentQuestionIndex];
+    const feedbackEl = document.getElementById('quizFeedback');
+
+    if (selectedOption === q.answer) {
+      feedbackEl.className = 'feedback success';
+      feedbackEl.innerText = '🎉 정답입니다! [다음 문제로 이동] 버튼을 클릭하세요.';
+      feedbackEl.style.display = 'block';
+      
+      document.getElementById('btnCheck').style.display = 'none';
+      document.getElementById('btnNext').style.display = 'block';
+    } else {
+      attempts[currentQuestionIndex]++;
+      document.getElementById('attemptBadge').innerText = `문제 ${currentQuestionIndex + 1} / ${questions.length} (현재 시도 횟수: ${attempts[currentQuestionIndex]}회)`;
+      
+      feedbackEl.className = 'feedback error';
+      feedbackEl.innerText = `❌ 틀렸습니다! 다시 생각해서 다른 답을 선택 후 [정답 확인]을 눌러보세요.`;
+      feedbackEl.style.display = 'block';
+
+      feedbackEl.classList.remove('error');
+      void feedbackEl.offsetWidth;
+      feedbackEl.classList.add('error');
+      
+      document.getElementById('btnCheck').style.display = 'block';
+      document.getElementById('btnNext').style.display = 'none';
+    }
+  }
+
+  function nextQuestion() {
+    currentQuestionIndex++;
+    if (currentQuestionIndex < questions.length) {
+      loadQuestion();
+    } else {
+      document.getElementById('secQuiz').classList.remove('active');
+      document.getElementById('secReflection').classList.add('active');
+      setProgress(85);
+    }
+  }
+
+  function submitData() {
+    const learned = document.getElementById('learned').value.trim();
+    const thoughts = document.getElementById('thoughts').value.trim();
+
+    if (!learned || !thoughts) {
+      alert("새롭게 알게 된 점과 느낀점을 모두 작성해주세요!");
+      return;
+    }
+
+    document.getElementById('secReflection').classList.remove('active');
+    document.getElementById('secComplete').classList.add('active');
+    setProgress(100);
+
+    const totalAttempts = attempts.reduce((a, b) => a + b, 0);
+
+    const payload = {
+      studentInfo: studentInfoData.info,
+      studentName: studentInfoData.name,
+      attempts: attempts,
+      totalAttempts: totalAttempts,
+      learned: learned,
+      thoughts: thoughts
+    };
+
+    fetch(GAS_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('loadingView').style.display = 'none';
+      document.getElementById('successView').style.display = 'block';
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      document.getElementById('loadingView').style.display = 'none';
+      document.getElementById('successView').style.display = 'block';
+    });
+  }
+</script>
+
+</body>
+</html>
